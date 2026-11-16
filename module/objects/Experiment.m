@@ -45,7 +45,7 @@ classdef Experiment < handle
             obj.ODMR.Sig = zeros( ...
                 [size(obj.ODMR.Ref), nFreq], ...
                 'like', obj.ODMR.Ref);
-            for i = 1:size(Freq, 2)
+            for i = 1:nFreq
                 obj.MW.frequency_MHz(Freq(i));
                 obj.ODMR.Sig(:,:,i) = obj.camera.snapshot(obj.MISC.Nloop);
             end
