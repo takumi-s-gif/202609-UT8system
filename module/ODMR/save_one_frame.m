@@ -1,0 +1,91 @@
+function [Img, cam] = save_one_frame(camera, data_name)
+    % Basler acA2040-120um から1フレーム取得し、
+    % 画像 Img とカメラ設定 cam を同じ .mat ファイルに保存する。
+
+    % 1フレーム取得
+    Img = getsnapshot(camera.vid);
+
+    % cam構造体を作成
+    cam = struct();
+
+    % --- 撮影時刻 ---
+    cam.AcquisitionTime = datetime("now");
+
+    % --- 画像サイズ ---
+    cam.ImageHeight_px = size(Img, 1);
+    cam.ImageWidth_px  = size(Img, 2);
+
+    % よく使う設定を個別保存
+    cam.ExposureTime = getCameraProperty(camera.src, 'ExposureTime');
+    cam.Gain = getCameraProperty(camera.src, 'Gain');
+    cam.Width = getCameraProperty(camera.src, 'Width');
+    cam.Height = getCameraProperty(camera.src, 'Height');
+    cam.OffsetX = getCameraProperty(camera.src, 'OffsetX');
+    cam.OffsetY = getCameraProperty(camera.src, 'OffsetY');
+    cam.TriggerMode = getCameraProperty(camera.src, 'TriggerMode');
+    cam.AcquisitionFrameRate = getCameraProperty(camera.src, 'AcquisitionFrameRate');
+
+
+    % ファイル名を作成
+    today = string(datetime("now", "Format", "yyyyMM"));
+    save_Folder_path = fullfile("\\133.11.161.51\home\Shared Workspace\UT8-system\202609-UT8system\data\" , today);
+    mkdir(save_Folder_path)
+
+    % Windowsのファイル名では ":" を使えないため
+    % yyyyMMdd_HHmmss形式にする
+    timestamp = string(datetime("now", "Format", "MMdd_HH-mm-ss"));
+
+    filename = timestamp + "_" + data_name + ".mat";
+
+    datapath = fullfile(save_Folder_path, filename);
+
+    % 保存
+    save(datapath, 'Img', 'cam', '-v7.3');
+end
+
+
+%% =========================================================
+% Camera property取得用
+% =========================================================
+
+function value = getCameraProperty(src, propertyName)
+
+    if isprop(src, propertyName)
+
+        try
+            value = src.(propertyName);
+
+        catch
+            value = [];
+        end
+
+    else
+        value = [];
+    end
+
+end
+
+
+
+%% =========================================================
+% Camera cleanup
+% =========================================================
+
+function cleanupCamera(vid)
+
+    try
+
+        if isvalid(vid)
+
+            if strcmp(vid.Running, 'on')
+                stop(vid);
+            end
+
+            delete(vid);
+
+        end
+
+    catch
+    end
+
+end

@@ -1,0 +1,41 @@
+clear,clc;
+master = Experiment("FC");
+
+%%
+Freq = 2865:1:2890;
+master.MISC.Nloop = 200;
+
+%%
+stop(master.camera.vid);
+master.camera.vid.Timeout = 60;
+
+%%
+master.camera.ROI(0.1,0.2,0.7,0.7);
+
+%%
+master.MW.off();
+master.coil.off();
+
+master.cryo.temperature_K(90);
+
+master.coil.current_A(15e-3);
+master.coil.on();
+
+master.cryo.temperature_K(50);
+
+%%
+answer = questdlg('ピントを合わせたか？', 'title');
+master.odmr(Freq, "15mAFC_50K");
+
+%%
+master.MW.off();
+master.coil.off();
+
+master.cryo.temperature_K(90);
+
+master.coil.current_A(6e-3);
+master.coil.on();
+
+master.cryo.temperature_K(50);
+
+master.odmr(Freq, "6mAZFC_50K");
