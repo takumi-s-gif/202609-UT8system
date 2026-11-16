@@ -12,7 +12,7 @@ classdef VectorGenerator < handle
         % connect mw generator
         function obj = VectorGenerator()
             obj.smu = visadev("GPIB0::28::INSTR");
-            obj.power = 10;
+            % power_dBm(obj, 10)
         end
     
         % Vector Generatorの解放
@@ -32,13 +32,13 @@ classdef VectorGenerator < handle
 
         % Set Frequency
         function frequency_MHz(obj, frequency)
-            writeline(obj.smu, sprintf("SOUR1:FREQ %.0fMHz", frequency) );
+            writeline(obj.smu, sprintf("SOUR1:FREQ %.6fMHz", frequency) );
         end
 
         % Set MW Power
         function power_dBm(obj, power)
             obj.power = power;
-            writeline(obj.smu, sprintf("SOUR1:POW %.0fdBm", power) );
+            writeline(obj.smu, sprintf("SOUR1:POW %.6fdBm", power) );
         end
     end
 
