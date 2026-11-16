@@ -26,7 +26,7 @@ classdef Experiment < handle
         end
 
         % ODMR
-        function odmr(obj, Freq, NameData)
+        function odmr(obj, Freq)
             obj.camera.triggermode_on(obj.MISC.Nloop);
 
             obj.MW.Freq = Freq;
@@ -39,6 +39,7 @@ classdef Experiment < handle
             obj.ODMR.Ref = obj.camera.snapshot(obj.MISC.Nloop);
 
             % Sig
+            mwCleanup = onCleanup(@() obj.MW.off())
             obj.MW.on();
 
             nFreq = numel(Freq);
@@ -52,9 +53,11 @@ classdef Experiment < handle
 
             % MW off
             obj.MW.off();
-
-            % Experiment.save_data()
-            obj.save_data(NameData);
+        end
+        
+        function odmr_save(obj, Freq, NameData)
+            obj.odmr(Freq)
+            obj.save_data(NameData)
         end
 
         % save data
