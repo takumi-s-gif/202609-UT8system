@@ -55,6 +55,41 @@ classdef Experiment < handle
             obj.MW.off();
         end
         
+        % 全周波数の掃引をMISC.Nloop回繰り返し、同じ周波数のSigを平均する。
+        function odmr_Nsweep(obj, Freq)
+            nSweep = obj.MISC.Nloop;
+            validateattributes(nSweep, {'double', 'single'}, ...
+                {'scalar', 'real', 'finite', 'integer', 'positive'}, ...
+                'Experiment.odmr_Nsweep', 'MISC.Nloop');
+            nSweep = double(nSweep);
+
+            obj.camera.triggermode_on(nSweep);
+            obj.MW.Freq = Freq;
+            obj.MW.off();
+            obj.ODMR = struct();
+
+            % snapshotは画像の合計を返すため、Refも1枚あたりの平均にする。
+            obj.ODMR.Ref = double(obj.camera.snapshot(nSweep)) / nSweep;
+
+            % 各掃引では、各周波数につき1枚ずつ撮影する。
+            obj.camera.triggermode_on(1);
+            nFreq = numel(Freq);
+            obj.ODMR.Sig = zeros([size(obj.ODMR.Ref), nFreq]);
+
+            mwCleanup = onCleanup(@() obj.MW.off());
+            obj.MW.on();
+            for iSweep = 1:nSweep
+                for iFreq = 1:nFreq
+                    obj.MW.frequency_MHz(Freq(iFreq));
+                    obj.ODMR.Sig(:,:,iFreq) = obj.ODMR.Sig(:,:,iFreq) ...
+                        + double(obj.camera.snapshot(1));
+                end
+            end
+            obj.ODMR.Sig = obj.ODMR.Sig ./ nSweep;
+
+            obj.MW.off();
+        end
+
         function odmr_save(obj, Freq, NameData)
             obj.odmr(Freq)
             obj.save_data(NameData)
