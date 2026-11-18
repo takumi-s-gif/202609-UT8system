@@ -39,7 +39,7 @@ classdef Experiment < handle
             obj.ODMR.Ref = obj.camera.snapshot(obj.MISC.Nloop);
 
             % Sig
-            mwCleanup = onCleanup(@() obj.MW.off())
+            mwCleanup = onCleanup(@() obj.MW.off());
             obj.MW.on();
 
             nFreq = numel(Freq);
