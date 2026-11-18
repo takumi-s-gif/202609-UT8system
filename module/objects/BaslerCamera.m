@@ -52,7 +52,26 @@ classdef BaslerCamera < handle
 
         % snapshot
         function img = snapshot(obj, Nloop)
-            % obj.triggermode_on(); 毎回呼び出していると掃引が遅くなる
+            validateattributes(Nloop, {'double', 'single'}, ...
+                {'scalar', 'real', 'finite', 'integer', 'positive'}, ...
+                'BaslerCamera.snapshot', 'Nloop');
+
+            % 再設定せず、トリガー送信前に要求枚数と設定枚数を照合する。
+            framesPerTrigger = obj.vid.FramesPerTrigger;
+            if strcmp(obj.src.TriggerSelector, 'FrameBurstStart')
+                framesPerCommand = obj.src.AcquisitionBurstFrameCount;
+            else
+                % コンストラクターで設定するFrameStartは1トリガー1枚。
+                framesPerCommand = 1;
+            end
+
+            if Nloop ~= framesPerTrigger || Nloop ~= framesPerCommand
+                error('BaslerCamera:FrameCountMismatch', ...
+                    ['Requested %g frames, but FramesPerTrigger is %g ' ...
+                     'and the camera is configured for %g frames per trigger. ' ...
+                     'Call triggermode_on(%g) before snapshot(%g).'], ...
+                    Nloop, framesPerTrigger, framesPerCommand, Nloop, Nloop);
+            end
 
             executeCommand(obj.src, 'TriggerSoftware');
             imgs = getdata(obj.vid, Nloop);
