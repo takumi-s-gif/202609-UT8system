@@ -79,6 +79,21 @@ classdef BaslerCamera < handle
                     Nloop, framesPerTrigger, framesPerCommand, Nloop, Nloop);
             end
 
+            % 総露光時間に50%と5秒の余裕を加え、秒単位で切り上げる。
+            exposureSeconds = double(obj.src.ExposureTime) * 1e-6;
+            requiredTimeout = ceil(1.5 * exposureSeconds * double(Nloop) + 5);
+            if obj.vid.Timeout < requiredTimeout
+                % Timeoutは取得中に変更できないため、延長時だけ再起動する。
+                wasRunning = strcmp(obj.vid.Running, 'on');
+                if wasRunning
+                    stop(obj.vid);
+                end
+                obj.vid.Timeout = requiredTimeout;
+                if wasRunning
+                    start(obj.vid);
+                end
+            end
+
             executeCommand(obj.src, 'TriggerSoftware');
             imgs = getdata(obj.vid, Nloop);
             img = squeeze( sum(uint32(imgs), 4) );
