@@ -10,8 +10,6 @@ classdef BaslerCamera < handle
     methods
         % connect camera
         function obj = BaslerCamera() 
-            imaqreset;
-
             info = imaqhwinfo('gentl');
 
             if isempty(info.DeviceIDs)
