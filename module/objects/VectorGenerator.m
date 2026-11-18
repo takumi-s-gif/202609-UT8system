@@ -3,6 +3,7 @@ classdef VectorGenerator < handle
     properties
         Freq
         power
+        limit
     end
     properties (Transient)
         smu
@@ -10,7 +11,10 @@ classdef VectorGenerator < handle
 
     methods
         % Vector Generatorとの接続・初期設定
-        function obj = VectorGenerator()
+        function obj = VectorGenerator(power_limit_dBm)
+            if nargin < 1
+                power_limit_dBm = -5;
+            end
             obj.smu = visadev("GPIB0::28::INSTR");
 
             % オフセット・周波数倍率
@@ -22,7 +26,9 @@ classdef VectorGenerator < handle
             writeline(obj.smu, "SOUR1:FREQ:MODE CW");
             writeline(obj.smu, "SOUR1:POW:MODE CW");
 
-            obj.waitComplete();
+            limit = obj.limit_power_dBm(power_limit_dBm);
+            obj.limit = limit;
+            fprintf("VSG power is limited to %.6f dBm\n", limit);
         end
     
         % RF出力停止・接続解放
@@ -68,6 +74,12 @@ classdef VectorGenerator < handle
             writeline(obj.smu, sprintf("SOUR1:POW %.6fdBm", power));
             obj.power = power;
             obj.waitComplete();
+        end
+        
+        function limit = limit_power_dBm(obj, power)
+            writeline(obj.smu, sprintf("SOUR1:POW:LIM %.6fdBm", power));
+            obj.waitComplete();
+            limit = str2double(writeread(obj.smu, "SOUR1:POW:LIM?"));
         end
     end
 
