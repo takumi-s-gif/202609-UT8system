@@ -56,7 +56,13 @@ classdef BaslerCamera < handle
                 {'scalar', 'real', 'finite', 'integer', 'positive'}, ...
                 'BaslerCamera.snapshot', 'Nloop');
 
-            % 再設定せず、トリガー送信前に要求枚数と設定枚数を照合する。
+            % preview/ROIで解除したトリガー設定は、撮影時に復元する。
+            if ~strcmp(obj.vid.TriggerType, 'hardware') || ...
+                    strcmp(obj.src.TriggerMode, 'Off')
+                obj.triggermode_on(Nloop);
+            end
+
+            % 撮影モードでの枚数不一致は、再設定で隠さずエラーにする。
             framesPerTrigger = obj.vid.FramesPerTrigger;
             if strcmp(obj.src.TriggerSelector, 'FrameBurstStart')
                 framesPerCommand = obj.src.AcquisitionBurstFrameCount;
@@ -81,7 +87,6 @@ classdef BaslerCamera < handle
         % preview
         function preview(obj)
             obj.triggermode_off(); %:triggerMode = onでpreviewすると何故か16bitでサチる
-            stoppreview(obj.vid);
             closepreview(obj.vid);
 
             img = getsnapshot(obj.vid); %この行があるとトリガーモードと競合するかもしれない、消すとpreviewがおかしくなる。
@@ -101,6 +106,9 @@ classdef BaslerCamera < handle
         end
 
         function triggermode_on(obj, Nloop)
+            % Runningがoffでもプレビューは動作し得るため、先に停止する。
+            stoppreview(obj.vid);
+
             % 動作中なら一度止める
             if strcmp(obj.vid.Running, 'on')
                 stop(obj.vid);
@@ -128,6 +136,9 @@ classdef BaslerCamera < handle
         end
 
         function triggermode_off(obj)
+            % ROI変更やトリガー設定の変更前にプレビューも停止する。
+            stoppreview(obj.vid);
+
             if strcmp(obj.vid.Running, 'on')
                 stop(obj.vid);
             end
