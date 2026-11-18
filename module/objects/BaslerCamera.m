@@ -45,6 +45,8 @@ classdef BaslerCamera < handle
 
         % Exposure time
         function exposure_us(obj, exposuretime)
+            obj.src.ExposureMode = 'Timed';
+            obj.src.ExposureAuto = 'Off';
             obj.src.ExposureTime = exposuretime;
 
             fprintf('Exposuretime = %.0f us. \n', exposuretime);
